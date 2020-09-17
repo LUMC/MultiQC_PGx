@@ -111,10 +111,10 @@ class MultiqcModule(BaseMultiqcModule):
                 anchor='multiqc_pgx_phasing_sample',
                 description=
                 """
-                    This plot shows the phased and unphased block for each
+                    This plot shows the phased and unphased blocks for each
                     gene of interest. You can use the buttons at the top of the
                     plot to switch between different samples. The phased blocks
-                    occur in the order they are on the genome. All unphased
+                    are shown in the order they are on the genome. All unphased
                     blocks are black.
                 """,
                 helptext=
@@ -174,10 +174,10 @@ class MultiqcModule(BaseMultiqcModule):
                 anchor='multiqc_pgx_phasing_gene',
                 description=
                 """
-                    This plot shows the phased and unphased block for each
+                    This plot shows the phased and unphased blocks for each
                     sample. You can use the buttons at the top of the
                     plot to switch between different genes. The phased blocks
-                    occur in the order they are on the genome. All unphased
+                    are shown in the order they are on the genome. All unphased
                     blocks are black.
                 """,
                 helptext=
