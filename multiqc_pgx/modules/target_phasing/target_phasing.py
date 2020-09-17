@@ -5,13 +5,10 @@ class MultiqcModule(BaseMultiqcModule):
     def __init__(self):
         # If the command line parameters were not specified, we are done
         # instantly
-        target_genes = config.kwargs['target_genes']
-        blocklist = config.kwargs['whatshap_blocklist']
-        if not (target_genes and blocklist):
+        self.target_genes = config.kwargs['target_genes']
+        self.blocklist = config.kwargs['whatshap_blocklist']
+        if not (self.target_genes and self.blocklist):
             raise UserWarning
-
-        print(target_genes)
-        print(blocklist)
 
         # Initialse the parent object
         super(MultiqcModule, self).__init__(name='PGx', anchor='pgx',
@@ -20,6 +17,44 @@ class MultiqcModule(BaseMultiqcModule):
                     'visualise phasing data for the target genes.'
                 )
         )
+
+        self.whatshap = dict()
+        self.parse_blocklist_files()
+
+    def parse_blocklist_files(self):
+        for filename in self.blocklist:
+            sample = self.get_sample(filename)
+            for target in self.parse_target_genes():
+                print(f'{target.name} is {target.chrom}:{target.begin}-{target.end}')
+                self.update_phasing(filename, target)
+                exit()
+
+    def parse_target_genes(self):
+        with open(self.target_genes) as fin:
+            for line in fin:
+                chrom, begin, end, name = line.strip().split()
+                begin = int(begin)
+                end = int(end)
+                yield Target(chrom, begin, end, name)
+
+    def get_sample(self, filename):
+        with open(filename) as fin:
+            # skip header
+            next(fin)
+            return next(fin).split()[0]
+
+    def update_phasing(self, filename, target):
+        with open(filename) as fin:
+            header =next(fin).strip().split()
+            assert header == ['#sample', 'chromosome', 'phase_set', 'from', 'to', 'variants']
+            for line in fin:
+                spline = line.strip().split()
+                chrom = spline[1]
+                begin = int(spline[3])
+                end = int(spline[4])
+                #print(chrom, begin, end)
+                target.update([(chrom, begin, end)])
+
 
 
 class Target():
@@ -82,4 +117,4 @@ class Target():
             if begin <= self.begin and end <= self.end:
                 rest = end-self.begin
                 self.phasing = '+' * rest + self.phasing[rest:]
-        assert old_length == len(self.phasing)
+        assert old_length == len(self.phasing), f'Error in {region}'

@@ -8,4 +8,5 @@ target_genes = click.option(
 
 whatshap_blocklist = click.option(
         '--whatshap-blocklist',
+        multiple=True,
         help='Phased regions produced by WhatHap using --block-list')
