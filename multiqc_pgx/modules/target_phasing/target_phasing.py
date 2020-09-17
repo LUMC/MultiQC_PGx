@@ -29,11 +29,20 @@ class MultiqcModule(BaseMultiqcModule):
         sample = 'sample1_pre_opt0_5x'
         data = self.whatshap[sample]
         print(json.dumps(data, indent=True))
+        # We want to have all unphased regions in black
+        formatting = dict()
+        for gene in data:
+            for block in data[gene]:
+                d = dict()
+                d['name'] = block
+                if block.startswith('unphased'):
+                    d['color'] = '#000000'
+                formatting[block] = d
 
         self.add_section(
                 name = 'Module section',
                 anchor = 'multiqc_pgx_phasing',
-                plot = bargraph.plot(data))
+                plot = bargraph.plot(data, formatting))
 
 
     def parse_blocklist_files(self):
@@ -50,11 +59,9 @@ class MultiqcModule(BaseMultiqcModule):
                 # We update the phasing of the target based on the blocklist
                 self.update_phasing(filename, target)
 
-                # We store the size of each phased block
-                phase_counter = 0
-                for begin, end in target.phased():
-                    phase_counter += 1
-                    self.whatshap[sample][target.name][f'phased-{phase_counter}'] = end-begin
+                # We store the size of each phased and unphased block
+                for begin, end, phasing in target.all_regions():
+                    self.whatshap[sample][target.name][phasing] = end-begin
 
     def parse_target_genes(self):
         with open(self.target_genes) as fin:
@@ -118,6 +125,31 @@ class Target():
         else:
             if phased:
                 yield(phase_start+self.begin, i+1+self.begin)
+
+    def all_regions(self):
+        phased = self.phasing[0] == '+'
+        block_start = 0
+        phased_count = 0
+        unphased_count = 0
+        for i in range(len(self.phasing)):
+            # If we find a phased block while we were unphased
+            if self.phasing[i] == '+' and not phased:
+                unphased_count += 1
+                yield (block_start + self.begin, i + self.begin, f'unphased-{unphased_count}')
+                block_start = i
+                phased = True
+            # If we find an unphased block while we were phased
+            if self.phasing[i] == '-' and phased:
+                phased_count += 1
+                # We have to offset the start of self
+                yield (block_start + self.begin, i + self.begin, f'phased-{phased_count}')
+                block_start = i
+                phased = False
+        # If we are at the end of the Target
+        if phased:
+            yield(block_start+self.begin, i+1+self.begin, f'phased-{phased_count+1}')
+        else:
+            yield(block_start+self.begin, i+1+self.begin, f'unphased-{unphased_count+1}')
 
     def update(self, regions):
         """ Update the phasing according to the regions """
