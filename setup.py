@@ -23,7 +23,8 @@ setup(
     install_requires = [ 'multiqc' ],
     entry_points = {
         'multiqc.cli_options.v1': [
-            'add_header = multiqc_pgx.cli:add_header'
+            'target_genes = multiqc_pgx.cli:target_genes',
+            'whatshap_blocklist = multiqc_pgx.cli:whatshap_blocklist',
         ],
         'multiqc.modules.v1': [
             'target_phasing = multiqc_pgx.modules.target_phasing:MultiqcModule'

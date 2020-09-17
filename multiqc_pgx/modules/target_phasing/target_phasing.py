@@ -3,7 +3,23 @@ from multiqc.utils import config
 
 class MultiqcModule(BaseMultiqcModule):
     def __init__(self):
-        print(config.kwargs['header'])
+        # If the command line parameters were not specified, we are done
+        # instantly
+        target_genes = config.kwargs['target_genes']
+        blocklist = config.kwargs['whatshap_blocklist']
+        if not (target_genes and blocklist):
+            raise UserWarning
+
+        print(target_genes)
+        print(blocklist)
+
+        # Initialse the parent object
+        super(MultiqcModule, self).__init__(name='PGx', anchor='pgx',
+                info=(
+                    'The PGx module is used by the LUMC PGx project to '
+                    'visualise phasing data for the target genes.'
+                )
+        )
 
 
 class Target():
@@ -40,8 +56,6 @@ class Target():
             if phased:
                 yield(phase_start+self.begin, i+1+self.begin)
 
-            
-
     def update(self, regions):
         """ Update the phasing according to the regions """
         old_length = len(self.phasing)
@@ -51,7 +65,7 @@ class Target():
             # If the region is on a different chromosome, we are done
             if chrom != self.chrom:
                 continue
-            
+
             # If both begin and end are in the target
             if begin >= self.begin and end <= self.end:
                 self.phasing = self.phasing[:begin] + '+'*size + self.phasing[end:]
@@ -69,31 +83,3 @@ class Target():
                 rest = end-self.begin
                 self.phasing = '+' * rest + self.phasing[rest:]
         assert old_length == len(self.phasing)
-                
-
-
-def target_overlap(regions, target):
-    """
-    Determine which parts of target overlap regions.
-
-    Return two lists of regions:
-        - inside, for the sections of target that are present in regions
-        - outside, for the sections of target that are absent from regions
-    """
-    inside = list()
-    outside= list()
-
-    if not regions:
-        return target
-
-def phased_intervals(phased_blocks, target_gene):
-    """
-    Determine the phased and unphased intervals on the target gene based on
-    the specified phased_blocks
-    """
-    # Keep track of the number of phased blocks we have encountered
-    counter = 1
-    # If there are no phased blocks, the entire target gene is unphased
-    if not phased_blocks:
-        return Interval(f'unphased', target_gene.begin, target_gene.end)
-
