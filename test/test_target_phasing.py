@@ -25,9 +25,10 @@ TARGETS = [
 ]
 
 PHASED = [
-        (Target('chr1', 5, 10, 'test'), '+++++', [(0,5)]),
-        #(Target('chr1', 0, 5, 'test'), [('chr1', 3, 5)], [(3, 5)]),
-        #(Target('chr1', 0, 5, 'test'), [('chr1', 3, 5),('chr1', 3, 5)], [(3, 5)]),
+        (Target('chr1', 5, 10, 'test'), '+++++', [(5,10)]),
+        (Target('chr1', 5, 10, 'test'), '++++-', [(5,9)]),
+        (Target('chr1', 5, 10, 'test'), '+---+', [(5,6),(9,10)]),
+        (Target('chr1', 5, 10, 'test'), '-----', []),
 ]
 
 def test_target():
@@ -41,3 +42,8 @@ def test_target():
 def test_phased_target(target, phased, result):
     target.update(phased)
     assert str(target) == result
+
+@pytest.mark.parametrize(['target', 'phasing', 'result'], PHASED)
+def test_phased(target, phasing, result):
+    target.phasing = phasing
+    assert list(target.phased()) == result

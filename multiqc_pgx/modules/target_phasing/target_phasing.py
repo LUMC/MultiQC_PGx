@@ -29,11 +29,17 @@ class Target():
             # If we find a new phased block
             if self.phasing[i] == '+' and not phased:
                 phase_start = i
+                phased = True
             # If we come to the end of the phased block
             if self.phasing[i] == '-' and phased:
                 # We have to offset the start of self
-                yield (phase_start+begin, i+begin)
+                yield (phase_start+self.begin, i+self.begin)
                 phased = False
+        # If we are at the end of the Target and we were in a phased block
+        else:
+            if phased:
+                yield(phase_start+self.begin, i+1+self.begin)
+
             
 
     def update(self, regions):
