@@ -103,15 +103,27 @@ class Target():
 
             # If both begin and end are in the target
             if begin >= self.begin and end <= self.end:
-                self.phasing = self.phasing[:begin] + '+'*size + self.phasing[end:]
+                # The phasing of the first part stays the same
+                first = self.phasing[:begin-self.begin]
+                # Then we add the newly phased part, which is smaller than wat
+                # is left
+                size = end - begin
+                phased = '+' * size
+                # Then the rest of the phasing
+                rest = len(first) + size
+                last = self.phasing[rest:]
+                self.phasing = first + phased + last
+
             # If the beginning is in the target, but the end is not
             if begin >= self.begin and end > self.end:
                 # The size of the target region counting from begin
                 rest = len(self.phasing)-begin
                 self.phasing = self.phasing[:begin] + '+'*rest
+
             # If region completely overlaps the target
             if begin <= self.begin and end >= self.end:
                 self.phasing = '+'*len(self.phasing)
+
             # If the beginning is before the target, but the ending is in the
             # target
             if begin <= self.begin and end <= self.end:
