@@ -26,6 +26,7 @@ class MultiqcModule(BaseMultiqcModule):
         self.parse_blocklist_files()
         self.write_data_files()
         self.plot_phasing_per_sample()
+        self.plot_phasing_per_gene()
 
     def parse_blocklist_files(self):
         # For each sample (defined in a blocklist)
@@ -74,25 +75,117 @@ class MultiqcModule(BaseMultiqcModule):
         self.write_data_file(self.whatshap, 'multiqc_pgx_phasing')
 
     def plot_phasing_per_sample(self):
-        # Try to plot the gene data for a single sample
-        sample = 'sample1_pre_opt0_5x'
-        data = self.whatshap[sample]
-        print(json.dumps(data, indent=True))
-        # We want to have all unphased regions in black
-        formatting = dict()
-        for gene in data:
-            for block in data[gene]:
-                d = dict()
-                d['name'] = block
-                if block.startswith('unphased'):
-                    d['color'] = '#000000'
-                formatting[block] = d
+        """ Plot the phasing of all genes for each sample """
+        pdata = list()
+        categories = list()
+        for sample in self.whatshap:
+            data = self.whatshap[sample]
+            print(json.dumps(data, indent=True))
+            # We want to have all unphased regions in black
+            formatting = dict()
+            for gene in data:
+                for block in data[gene]:
+                    d = dict()
+                    d['name'] = block
+                    if block.startswith('unphased'):
+                        d['color'] = '#000000'
+                    formatting[block] = d
+            pdata.append(data)
+            categories.append(formatting)
+
+        configuration = {
+            'id': 'multiqc_pgx_by_sample',
+            'title': 'Phasing per Sample',
+            'anchor': 'multiqc_pgx_phasing_sample',
+            'data_labels': [
+                {
+                    'name': sample,
+                    'cpswitch_counts_label': sample
+                } for sample in self.whatshap
+            ]
+        }
+
 
         self.add_section(
-                name = 'Phasing per sample',
-                anchor = 'multiqc_pgx_phasing',
-                plot = bargraph.plot(data, formatting))
+                name='Phasing per sample',
+                anchor='multiqc_pgx_phasing_sample',
+                description=
+                """
+                    This plot shows the phased and unphased block for each
+                    gene of interest. You can use the buttons at the top of the
+                    plot to switch between different samples. The phased blocks
+                    occur in the order they are on the genome. All unphased
+                    blocks are black.
+                """,
+                helptext=
+                """
+                    MultiQC interprets the gene names in this plot as sample
+                    names, so you can use the **Toolbox** on the right to
+                    filter out specific genes. For example, filtering *DPYD*
+                    gives a much clearer overview of the phasing of the other
+                    genes.
+                """,
+                plot = bargraph.plot(pdata, categories, configuration))
 
+    def plot_phasing_per_gene(self):
+        """ Plot the phasing of samples for each gene """
+        pdata = list()
+        categories = list()
+
+        # Get the genes of interest
+        genes = list(self.whatshap.values())[0]
+
+        for gene in genes:
+            print(gene, '<-', '-'*55)
+        # Get the gene data fore each sample
+            gene_data = dict()
+            for sample in self.whatshap:
+                data = self.whatshap[sample][gene]
+                gene_data[sample] = data
+            print(json.dumps(gene_data, indent=True))
+
+            # We want to have all unphased regions in black
+            formatting = dict()
+            for sample in gene_data:
+                for block in gene_data[sample]:
+                    d = dict()
+                    d['name'] = block
+                    if block.startswith('unphased'):
+                        d['color'] = '#000000'
+                    formatting[block] = d
+            pdata.append(gene_data)
+            categories.append(formatting)
+
+        configuration = {
+            'id': 'multiqc_pgx_by_gene',
+            'title': 'Phasing per Gene',
+            'anchor': 'multiqc_pgx_phasing_gene',
+            'data_labels': [
+                {
+                    'name': gene,
+                    'cpswitch_counts_label': gene
+                } for gene in genes
+            ]
+        }
+
+
+        self.add_section(
+                name='Phasing per Gene',
+                anchor='multiqc_pgx_phasing_gene',
+                description=
+                """
+                    This plot shows the phased and unphased block for each
+                    sample. You can use the buttons at the top of the
+                    plot to switch between different genes. The phased blocks
+                    occur in the order they are on the genome. All unphased
+                    blocks are black.
+                """,
+                helptext=
+                """
+                    You can use the **Toolbox** on the right to
+                    filter out specific samples.
+                """,
+                plot = bargraph.plot(pdata, categories, configuration))
 
 
 class Target():
