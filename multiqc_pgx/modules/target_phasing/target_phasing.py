@@ -1,5 +1,8 @@
 from multiqc.modules.base_module import BaseMultiqcModule
 from multiqc.utils import config
+from multiqc.plots import bargraph
+
+import json
 
 class MultiqcModule(BaseMultiqcModule):
     def __init__(self):
@@ -19,15 +22,39 @@ class MultiqcModule(BaseMultiqcModule):
         )
 
         self.whatshap = dict()
+        self.genes = list()
         self.parse_blocklist_files()
+        self.write_data_files()
+        # Try to plot the gene data for a single sample
+        sample = 'sample1_pre_opt0_5x'
+        data = self.whatshap[sample]
+        print(json.dumps(data, indent=True))
+
+        self.add_section(
+                name = 'Module section',
+                anchor = 'multiqc_pgx_phasing',
+                plot = bargraph.plot(data))
+
 
     def parse_blocklist_files(self):
+        # For each sample (defined in a blocklist)
         for filename in self.blocklist:
             sample = self.get_sample(filename)
+            self.whatshap[sample] = dict()
+            # For each of the target genes
             for target in self.parse_target_genes():
+                # We store a dictionary for every gene
+                self.whatshap[sample][target.name] = dict()
+                self.genes.append(target.name)
                 print(f'{target.name} is {target.chrom}:{target.begin}-{target.end}')
+                # We update the phasing of the target based on the blocklist
                 self.update_phasing(filename, target)
-                exit()
+
+                # We store the size of each phased block
+                phase_counter = 0
+                for begin, end in target.phased():
+                    phase_counter += 1
+                    self.whatshap[sample][target.name][f'phased-{phase_counter}'] = end-begin
 
     def parse_target_genes(self):
         with open(self.target_genes) as fin:
@@ -45,16 +72,17 @@ class MultiqcModule(BaseMultiqcModule):
 
     def update_phasing(self, filename, target):
         with open(filename) as fin:
-            header =next(fin).strip().split()
+            header = next(fin).strip().split()
             assert header == ['#sample', 'chromosome', 'phase_set', 'from', 'to', 'variants']
             for line in fin:
                 spline = line.strip().split()
                 chrom = spline[1]
                 begin = int(spline[3])
                 end = int(spline[4])
-                #print(chrom, begin, end)
                 target.update([(chrom, begin, end)])
 
+    def write_data_files(self):
+        self.write_data_file(self.whatshap, 'multiqc_pgx_phasing')
 
 
 class Target():
@@ -103,6 +131,7 @@ class Target():
 
             # If both begin and end are in the target
             if begin >= self.begin and end <= self.end:
+                #print(f'{region} is contained within target ({self.chrom}:{self.begin}-{self.end})')
                 # The phasing of the first part stays the same
                 first = self.phasing[:begin-self.begin]
                 # Then we add the newly phased part, which is smaller than wat
@@ -115,18 +144,21 @@ class Target():
                 self.phasing = first + phased + last
 
             # If the beginning is in the target, but the end is not
-            if begin >= self.begin and end > self.end:
+            elif begin >= self.begin and end > self.end:
+                #print(f'{region} overlaps the end of target ({self.chrom}:{self.begin}-{self.end}))')
                 # The size of the target region counting from begin
                 rest = len(self.phasing)-begin
                 self.phasing = self.phasing[:begin] + '+'*rest
 
             # If region completely overlaps the target
-            if begin <= self.begin and end >= self.end:
+            elif begin <= self.begin and end >= self.end:
+                #print(f'{region} overlaps the target completely ({self.chrom}:{self.begin}-{self.end}))')
                 self.phasing = '+'*len(self.phasing)
 
             # If the beginning is before the target, but the ending is in the
             # target
-            if begin <= self.begin and end <= self.end:
+            elif begin <= self.begin and end <= self.end and end >= self.begin:
+                #print(f'{region} overlaps the beginning of target ({self.chrom}:{self.begin}-{self.end}))')
                 rest = end-self.begin
                 self.phasing = '+' * rest + self.phasing[rest:]
         assert old_length == len(self.phasing), f'Error in {region}'
