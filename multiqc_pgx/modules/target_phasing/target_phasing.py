@@ -25,25 +25,7 @@ class MultiqcModule(BaseMultiqcModule):
         self.genes = list()
         self.parse_blocklist_files()
         self.write_data_files()
-        # Try to plot the gene data for a single sample
-        sample = 'sample1_pre_opt0_5x'
-        data = self.whatshap[sample]
-        print(json.dumps(data, indent=True))
-        # We want to have all unphased regions in black
-        formatting = dict()
-        for gene in data:
-            for block in data[gene]:
-                d = dict()
-                d['name'] = block
-                if block.startswith('unphased'):
-                    d['color'] = '#000000'
-                formatting[block] = d
-
-        self.add_section(
-                name = 'Module section',
-                anchor = 'multiqc_pgx_phasing',
-                plot = bargraph.plot(data, formatting))
-
+        self.plot_phasing_per_sample()
 
     def parse_blocklist_files(self):
         # For each sample (defined in a blocklist)
@@ -90,6 +72,27 @@ class MultiqcModule(BaseMultiqcModule):
 
     def write_data_files(self):
         self.write_data_file(self.whatshap, 'multiqc_pgx_phasing')
+
+    def plot_phasing_per_sample(self):
+        # Try to plot the gene data for a single sample
+        sample = 'sample1_pre_opt0_5x'
+        data = self.whatshap[sample]
+        print(json.dumps(data, indent=True))
+        # We want to have all unphased regions in black
+        formatting = dict()
+        for gene in data:
+            for block in data[gene]:
+                d = dict()
+                d['name'] = block
+                if block.startswith('unphased'):
+                    d['color'] = '#000000'
+                formatting[block] = d
+
+        self.add_section(
+                name = 'Phasing per sample',
+                anchor = 'multiqc_pgx_phasing',
+                plot = bargraph.plot(data, formatting))
+
 
 
 class Target():
