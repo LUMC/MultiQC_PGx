@@ -32,6 +32,8 @@ class MultiqcModule(BaseMultiqcModule):
         # For each sample (defined in a blocklist)
         for filename in self.blocklist:
             sample = self.get_sample(filename)
+            if not sample:
+                continue
             self.whatshap[sample] = dict()
             # For each of the target genes
             for target in self.parse_target_genes():
@@ -58,7 +60,10 @@ class MultiqcModule(BaseMultiqcModule):
         with open(filename) as fin:
             # skip header
             next(fin)
-            return next(fin).split()[0]
+            try:
+                return next(fin).split()[0]
+            except StopIteration:  # Empty file
+                return None
 
     def update_phasing(self, filename, target):
         with open(filename) as fin:
@@ -89,6 +94,8 @@ class MultiqcModule(BaseMultiqcModule):
                     d['name'] = block
                     if block.startswith('unphased'):
                         d['color'] = '#000000'
+                    if block.startswith('phased'):
+                        d['color'] = '#7CB5EC'
                     formatting[block] = d
             pdata.append(data)
             categories.append(formatting)
@@ -135,9 +142,8 @@ class MultiqcModule(BaseMultiqcModule):
         # Get the genes of interest
         genes = list(self.whatshap.values())[0]
 
-        for gene in genes:
-            print(gene, '<-', '-'*55)
         # Get the gene data fore each sample
+        for gene in genes:
             gene_data = dict()
             for sample in self.whatshap:
                 data = self.whatshap[sample][gene]
@@ -152,6 +158,8 @@ class MultiqcModule(BaseMultiqcModule):
                     d['name'] = block
                     if block.startswith('unphased'):
                         d['color'] = '#000000'
+                    if block.startswith('phased'):
+                        d['color'] = '#7CB5EC'
                     formatting[block] = d
             pdata.append(gene_data)
             categories.append(formatting)
