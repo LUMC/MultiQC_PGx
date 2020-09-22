@@ -20,7 +20,9 @@ setup(
     license = 'MIT',
     packages = find_packages(),
     include_package_data = True,
-    install_requires = [ 'multiqc' ],
+    install_requires = [
+        'multiqc @ git+https://git@github.com/redmar-van-den-berg/MultiQC@chimera#egg=multiqc'
+    ],
     entry_points = {
         'multiqc.cli_options.v1': [
             'target_genes = multiqc_pgx.cli:target_genes',
