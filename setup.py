@@ -27,6 +27,7 @@ setup(
         'multiqc.cli_options.v1': [
             'target_genes = multiqc_pgx.cli:target_genes',
             'whatshap_blocklist = multiqc_pgx.cli:whatshap_blocklist',
+            'whatshap_sample = multiqc_pgx.cli:whatshap_sample',
         ],
         'multiqc.modules.v1': [
             'target_phasing = multiqc_pgx.modules.target_phasing:MultiqcModule'

@@ -6,12 +6,9 @@ import json
 
 class MultiqcModule(BaseMultiqcModule):
     def __init__(self):
-        # If the command line parameters were not specified, we are done
-        # instantly
-        self.target_genes = config.kwargs['target_genes']
-        self.blocklist = config.kwargs['whatshap_blocklist']
-        if not (self.target_genes and self.blocklist):
-            raise UserWarning
+        # Check if the command line arguments were specified, and specified
+        # correctly. Raise an error or warning if this is not the case.
+        self.check_command_line()
 
         # Initialse the parent object
         super(MultiqcModule, self).__init__(name='PGx', anchor='pgx',
@@ -28,12 +25,35 @@ class MultiqcModule(BaseMultiqcModule):
         self.plot_phasing_per_sample()
         self.plot_phasing_per_gene()
 
+    def check_command_line(self):
+        """ Make sure the command line arguments are usable """
+        # Get the command line arguments for this module
+        self.target_genes = config.kwargs['target_genes']
+        self.blocklist = config.kwargs['whatshap_blocklist']
+        self.samples = config.kwargs['whatshap_sample']
+
+        arguments = [self.target_genes, self.blocklist, self.samples]
+
+        # If none of the arguments were specified, we don't have to do anything
+        if not any(arguments):
+            raise UserWarning
+
+        # If not all of the module arguments were specified, raise an error
+        if not all(arguments):
+            msg = ('--target-genes, --whatshap-blocklist and '
+                   '--whatshap-sample must all be specified.')
+            raise RuntimeError(msg)
+
+        # If we did not get a --sample-name for each --whatshap-blocklist,
+        # raise an error
+        if len(self.blocklist) != len(self.samples):
+            msg = ('Please specify --whatshap-sample for each '
+                   '--whatshap-blocklist file')
+            raise RuntimeError(msg)
+
     def parse_blocklist_files(self):
         # For each sample (defined in a blocklist)
-        for filename in self.blocklist:
-            sample = self.get_sample(filename)
-            if not sample:
-                continue
+        for sample, filename in zip(self.samples, self.blocklist):
             self.whatshap[sample] = dict()
             # For each of the target genes
             for target in self.parse_target_genes():
@@ -56,19 +76,18 @@ class MultiqcModule(BaseMultiqcModule):
                 end = int(end)
                 yield Target(chrom, begin, end, name)
 
-    def get_sample(self, filename):
-        with open(filename) as fin:
-            # skip header
-            next(fin)
-            try:
-                return next(fin).split()[0]
-            except StopIteration:  # Empty file
-                return None
-
     def update_phasing(self, filename, target):
         with open(filename) as fin:
-            header = next(fin).strip().split()
+            # If filename is an empty file, we are done
+            try:
+                header = next(fin).strip().split()
+            except StopIteration:
+                return
+
+            # Did we get the expected header
             assert header == ['#sample', 'chromosome', 'phase_set', 'from', 'to', 'variants']
+
+            # Start parsing the file
             for line in fin:
                 spline = line.strip().split()
                 chrom = spline[1]
