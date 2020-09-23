@@ -34,8 +34,8 @@ class MultiqcModule(BaseMultiqcModule):
 
         arguments = [self.target_genes, self.blocklist, self.samples]
 
-        # If none of the arguments were specified, we don't have to do anything
-        if not any(arguments):
+        # If there were no target genes specified, we don't have to do anything
+        if not self.target_genes:
             raise UserWarning
 
         # If not all of the module arguments were specified, raise an error
