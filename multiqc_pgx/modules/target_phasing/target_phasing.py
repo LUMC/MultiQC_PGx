@@ -133,7 +133,7 @@ class MultiqcModule(BaseMultiqcModule):
 
 
         self.add_section(
-                name='Phasing per sample',
+                name='Phasing per Sample',
                 anchor='multiqc_pgx_phasing_sample',
                 description=
                 """
