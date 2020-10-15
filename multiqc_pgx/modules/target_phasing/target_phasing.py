@@ -23,7 +23,9 @@ class MultiqcModule(BaseMultiqcModule):
         self.parse_blocklist_files()
         self.write_data_files()
         self.plot_phasing_per_sample()
+        self.plot_phased_block_per_sample()
         self.plot_phasing_per_gene()
+        self.plot_phased_block_per_gene()
 
     def check_command_line(self):
         """ Make sure the command line arguments are usable """
@@ -102,7 +104,19 @@ class MultiqcModule(BaseMultiqcModule):
         pdata = list()
         categories = list()
         for sample in self.whatshap:
-            data = self.whatshap[sample]
+            block_data = self.whatshap[sample]
+            data = dict()
+            # Merge the block data into totals for each gene
+            for gene in block_data:
+                phased = 0
+                unphased = 0
+                for phasing, value in block_data[gene].items():
+                    if phasing.startswith('unphased'):
+                        unphased += value
+                    elif phasing.startswith('phased'):
+                        phased += value
+                data[gene] = {'phased': phased, 'unphased': unphased}
+
             # We want to have all unphased regions in black
             formatting = dict()
             for gene in data:
@@ -118,7 +132,7 @@ class MultiqcModule(BaseMultiqcModule):
             categories.append(formatting)
 
         configuration = {
-            'id': 'multiqc_pgx_by_sample',
+            'id': 'multiqc_pgx_phasing_by_sample',
             'title': 'Phasing per Sample',
             'anchor': 'multiqc_pgx_phasing_sample',
             'data_labels': [
@@ -135,13 +149,66 @@ class MultiqcModule(BaseMultiqcModule):
                 anchor='multiqc_pgx_phasing_sample',
                 description=
                 """
+                    This plot shows the total number of phased and unphased
+                    bases for each gene of interest. Use the buttons at the
+                    top of the plot to switch between different samples.
+                """,
+                helptext=
+                """
+                    MultiQC interprets the gene names in this plot as sample
+                    names, so you can use the **Toolbox** on the right to
+                    filter out specific genes. For example, filtering *DPYD*
+                    gives a much clearer overview of the phasing of the other
+                    genes.
+                """,
+                plot = bargraph.plot(pdata, categories, configuration))
+
+    def plot_phased_block_per_sample(self):
+        """ Plot the phased blocks of all genes for each sample """
+        pdata = list()
+        categories = list()
+        for sample in self.whatshap:
+            data = self.whatshap[sample]
+            # We want to have all unphased regions in black
+            formatting = dict()
+            for gene in data:
+                for block in data[gene]:
+                    d = dict()
+                    d['name'] = block
+                    if block.startswith('unphased'):
+                        d['color'] = '#000000'
+                    if block.startswith('phased'):
+                        d['color'] = '#7CB5EC'
+                    formatting[block] = d
+            pdata.append(data)
+            categories.append(formatting)
+
+        configuration = {
+            'id': 'multiqc_pgx_phased_block_sample',
+            'title': 'Phased blocks per Sample',
+            'anchor': 'multiqc_pgx_phased_block_sample',
+            'data_labels': [
+                {
+                    'name': sample,
+                    'cpswitch_counts_label': sample
+                } for sample in self.whatshap
+            ]
+        }
+
+
+        self.add_section(
+                name='Phased Blocks per Sample',
+                anchor='multiqc_pgx_phased_block_sample',
+                description=
+                """
                     This plot shows the phased and unphased blocks for each
                     gene of interest. Each phased or unphased block corresponds
-                    to the position of the block on the reference genome.
-                    You can use the buttons at the top of the plot to switch
-                    between different samples. The phased blocks are shown in
-                    the order they are on the genome. All unphased blocks are
-                    black.
+                    to the position of the block on the reference genome. Use
+                    the buttons at the top of the plot to switch between
+                    different samples. The phased blocks are shown in the order
+                    they are on the genome. The numbering of the blocks is
+                    arbitrary, and only used to make sure that the phased and
+                    unphased blocks are displayed in the correct order.
                 """,
                 helptext=
                 """
@@ -166,7 +233,15 @@ class MultiqcModule(BaseMultiqcModule):
             gene_data = dict()
             for sample in self.whatshap:
                 data = self.whatshap[sample][gene]
-                gene_data[sample] = data
+                # Merge the block data into totals for each sample
+                phased = 0
+                unphased = 0
+                for phasing, value in data.items():
+                    if phasing.startswith('unphased'):
+                        unphased += value
+                    elif phasing.startswith('phased'):
+                        phased += value
+                gene_data[sample] = {'phased': phased, 'unphased': unphased}
 
             # We want to have all unphased regions in black
             formatting = dict()
@@ -200,12 +275,71 @@ class MultiqcModule(BaseMultiqcModule):
                 anchor='multiqc_pgx_phasing_gene',
                 description=
                 """
+                    This plot shows the total number of phased and unphased
+                    bases for each sample. Use the buttons at the top of the
+                    plot to switch between different genes.
+                """,
+                helptext=
+                """
+                    You can use the **Toolbox** on the right to
+                    filter out specific samples.
+                """,
+                plot = bargraph.plot(pdata, categories, configuration))
+
+    def plot_phased_block_per_gene(self):
+        """ Plot the phased blocks of samples for each gene """
+        pdata = list()
+        categories = list()
+
+        # Get the genes of interest
+        genes = list(self.whatshap.values())[0]
+
+        # Get the gene data fore each sample
+        for gene in genes:
+            gene_data = dict()
+            for sample in self.whatshap:
+                data = self.whatshap[sample][gene]
+                gene_data[sample] = data
+
+            # We want to have all unphased regions in black
+            formatting = dict()
+            for sample in gene_data:
+                for block in gene_data[sample]:
+                    d = dict()
+                    d['name'] = block
+                    if block.startswith('unphased'):
+                        d['color'] = '#000000'
+                    if block.startswith('phased'):
+                        d['color'] = '#7CB5EC'
+                    formatting[block] = d
+            pdata.append(gene_data)
+            categories.append(formatting)
+
+        configuration = {
+            'id': 'multiqc_pgx_phased_block_gene',
+            'title': 'Phased Blocks per Gene',
+            'anchor': 'multiqc_pgx_phased_block_gene',
+            'data_labels': [
+                {
+                    'name': gene,
+                    'cpswitch_counts_label': gene
+                } for gene in genes
+            ]
+        }
+
+        self.add_section(
+                name='Phased Blocks per Gene',
+                anchor='multiqc_pgx_phased_block_gene',
+                description=
+                """
                     This plot shows the phased and unphased blocks for each
                     sample. Each phased or unphased block corresponds to the
-                    position of the block on the reference genome. You can use
-                    the buttons at the top of the plot to switch between
+                    position of the block on the reference genome.
+                    Use the buttons at the top of the plot to switch between
                     different genes. The phased blocks are shown in the order
-                    they are on the genome. All unphased blocks are black.
+                    they are on the genome. The numbering of the blocks is
+                    arbitrary, and only used to make sure that the phased and
+                    unphased blocks are displayed in the correct order.
                 """,
                 helptext=
                 """
