@@ -145,7 +145,7 @@ class MultiqcModule(BaseMultiqcModule):
 
 
         self.add_section(
-                name='Phasing per Sample',
+                name='Phasing per sample',
                 anchor='multiqc_pgx_phasing_sample',
                 description=
                 """
@@ -197,7 +197,7 @@ class MultiqcModule(BaseMultiqcModule):
 
 
         self.add_section(
-                name='Phased Blocks per Sample',
+                name='Phased blocks per sample',
                 anchor='multiqc_pgx_phased_block_sample',
                 description=
                 """
@@ -271,7 +271,7 @@ class MultiqcModule(BaseMultiqcModule):
 
 
         self.add_section(
-                name='Phasing per Gene',
+                name='Phasing per gene',
                 anchor='multiqc_pgx_phasing_gene',
                 description=
                 """
@@ -328,7 +328,7 @@ class MultiqcModule(BaseMultiqcModule):
         }
 
         self.add_section(
-                name='Phased Blocks per Gene',
+                name='Phased blocks per gene',
                 anchor='multiqc_pgx_phased_block_gene',
                 description=
                 """
