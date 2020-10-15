@@ -60,7 +60,6 @@ class MultiqcModule(BaseMultiqcModule):
                 # We store a dictionary for every gene
                 self.whatshap[sample][target.name] = dict()
                 self.genes.append(target.name)
-                print(f'{target.name} is {target.chrom}:{target.begin}-{target.end}')
                 # We update the phasing of the target based on the blocklist
                 self.update_phasing(filename, target)
 
@@ -104,7 +103,6 @@ class MultiqcModule(BaseMultiqcModule):
         categories = list()
         for sample in self.whatshap:
             data = self.whatshap[sample]
-            print(json.dumps(data, indent=True))
             # We want to have all unphased regions in black
             formatting = dict()
             for gene in data:
@@ -138,10 +136,12 @@ class MultiqcModule(BaseMultiqcModule):
                 description=
                 """
                     This plot shows the phased and unphased blocks for each
-                    gene of interest. You can use the buttons at the top of the
-                    plot to switch between different samples. The phased blocks
-                    are shown in the order they are on the genome. All unphased
-                    blocks are black.
+                    gene of interest. Each phased or unphased block corresponds
+                    to the position of the block on the reference genome.
+                    You can use the buttons at the top of the plot to switch
+                    between different samples. The phased blocks are shown in
+                    the order they are on the genome. All unphased blocks are
+                    black.
                 """,
                 helptext=
                 """
@@ -167,7 +167,6 @@ class MultiqcModule(BaseMultiqcModule):
             for sample in self.whatshap:
                 data = self.whatshap[sample][gene]
                 gene_data[sample] = data
-            print(json.dumps(gene_data, indent=True))
 
             # We want to have all unphased regions in black
             formatting = dict()
@@ -202,10 +201,11 @@ class MultiqcModule(BaseMultiqcModule):
                 description=
                 """
                     This plot shows the phased and unphased blocks for each
-                    sample. You can use the buttons at the top of the
-                    plot to switch between different genes. The phased blocks
-                    are shown in the order they are on the genome. All unphased
-                    blocks are black.
+                    sample. Each phased or unphased block corresponds to the
+                    position of the block on the reference genome. You can use
+                    the buttons at the top of the plot to switch between
+                    different genes. The phased blocks are shown in the order
+                    they are on the genome. All unphased blocks are black.
                 """,
                 helptext=
                 """
