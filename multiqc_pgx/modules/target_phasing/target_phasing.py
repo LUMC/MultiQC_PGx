@@ -21,7 +21,6 @@ class MultiqcModule(BaseMultiqcModule):
         self.whatshap = dict()
         self.genes = list()
         self.parse_blocklist_files()
-        self.write_data_files()
         self.plot_phasing_per_sample()
         self.plot_phased_block_per_sample()
         self.plot_phasing_per_gene()
@@ -29,6 +28,7 @@ class MultiqcModule(BaseMultiqcModule):
         # Determine the total phased and unphased counts of the target genes
         # for each sample
         self.phase_summary = self.determine_phase_summary()
+        self.write_data_files()
 
     def check_command_line(self):
         """ Make sure the command line arguments are usable """
@@ -101,6 +101,7 @@ class MultiqcModule(BaseMultiqcModule):
 
     def write_data_files(self):
         self.write_data_file(self.whatshap, 'multiqc_pgx_phasing')
+        self.write_data_file(self.phase_summary, 'multiqc_pgx_phase_summary')
 
     def plot_phasing_per_sample(self):
         """ Plot the phasing of all genes for each sample """
