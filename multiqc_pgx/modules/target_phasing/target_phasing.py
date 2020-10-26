@@ -3,6 +3,7 @@ from multiqc.utils import config
 from multiqc.plots import bargraph
 
 import json
+from collections import OrderedDict
 
 class MultiqcModule(BaseMultiqcModule):
     def __init__(self):
@@ -29,6 +30,7 @@ class MultiqcModule(BaseMultiqcModule):
         # for each sample
         self.phase_summary = self.determine_phase_summary()
         self.write_data_files()
+        self.add_general_stats()
 
     def check_command_line(self):
         """ Make sure the command line arguments are usable """
@@ -396,6 +398,52 @@ class MultiqcModule(BaseMultiqcModule):
                         }
 
         return phase_summary
+
+    def add_general_stats(self):
+        """ Add summary target phasing statistics """
+
+        # Set the header information
+        general_stats_headers = OrderedDict([
+            ('phased', {
+                'id': 'phased_targets',
+                'title': 'Phased targets',
+                'description':
+                    'Number of phased bases across all target genes',
+                'hidden' : True
+                }
+            ),
+            ('unphased', {
+                'id': 'unphased_targets',
+                'title' : 'Unphased targets',
+                'description':
+                    'Number of unphased bases across all target genes',
+                'hidden' : True
+                }
+            ),
+            ('frac_phased', {
+                'id': 'phased_percentage',
+                'title': '% Target Phased',
+                'description':
+                    'Percentage of phased bases, out of all target genes',
+                'min' : 0,
+                'max' : 100,
+                'modify' : lambda x: x*100,
+                'suffix' : '%',
+                'hidden' : False
+                }
+            )
+        ])
+
+        # Add the data to general stats, based on the headers defined in the
+        # general_stats_header
+        general_stats = dict()
+        for sample, data in self.phase_summary.items():
+            sample_stats = {
+                    field: data[field] for field in general_stats_headers
+            }
+            general_stats[sample] = sample_stats
+
+        self.general_stats_addcols(general_stats, general_stats_headers)
 
 
 class Target():
