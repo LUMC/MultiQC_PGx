@@ -26,6 +26,9 @@ class MultiqcModule(BaseMultiqcModule):
         self.plot_phased_block_per_sample()
         self.plot_phasing_per_gene()
         self.plot_phased_block_per_gene()
+        # Determine the total phased and unphased counts of the target genes
+        # for each sample
+        self.phase_summary = self.determine_phase_summary()
 
     def check_command_line(self):
         """ Make sure the command line arguments are usable """
@@ -347,6 +350,51 @@ class MultiqcModule(BaseMultiqcModule):
                     filter out specific samples.
                 """,
                 plot = bargraph.plot(pdata, categories, configuration))
+
+    def determine_phase_summary(self):
+        """
+        Determine the percentage of phased bases across all targets
+
+        Since self.whatshap contains the phased and unphased blocks for each
+        gene of interest for each sample, we can simply sum the phased and
+        unphased blocks to determine the percentage of phased bases.
+
+        Determines the phased and unphased totals, and also the fraction
+        (between 0 and 1) of phased and unphased bases, relative to the total
+        number of target bases.
+
+        """
+        phase_summary = dict()
+
+        # This is for sanity checking later on, phased + unphased should be
+        # equal for each sample
+        target_bp = None
+        for sample in self.whatshap:
+            phased = 0
+            unphased = 0
+            for gene in self.whatshap[sample]:
+                for block in self.whatshap[sample][gene]:
+                    if block.startswith('unphased'):
+                        unphased += self.whatshap[sample][gene][block]
+                    else:
+                        phased += self.whatshap[sample][gene][block]
+
+            # Lets do some sanity checks, the targets are the same for each
+            # sample, so phased + unphased should be equal
+            if target_bp:
+                assert target_bp == phased + unphased
+            else:  # This is the first sample we parse
+                target_bp = phased + unphased
+
+            # Add the results to the dictionary
+            phase_summary[sample] = {
+                        'unphased': unphased,
+                        'frac_unphased': round(unphased / target_bp, 3),
+                        'phased': phased,
+                        'frac_phased': round(phased / target_bp, 3)
+                        }
+
+        return phase_summary
 
 
 class Target():
