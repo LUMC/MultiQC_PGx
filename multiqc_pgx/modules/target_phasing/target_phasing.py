@@ -99,6 +99,13 @@ class MultiqcModule(BaseMultiqcModule):
                 chrom = spline[1]
                 begin = int(spline[3])
                 end = int(spline[4])
+                # The positions in the blocklist are 1 based inclusive, see
+                # https://whatshap.readthedocs.io/en/latest/guide.html#writing-haplotype-blocks-in-tsv-format
+                # for details.
+                #
+                # In short, all we need to do to make this compatible with the
+                # Target class is to decrement begin by 1
+                begin -= 1
                 target.update([(chrom, begin, end)])
 
     def write_data_files(self):
@@ -451,6 +458,9 @@ class Target():
     Class to store the target region in. At initialisation, the entire region
     is unphased. The phasing can be updated by passing phased regions to
     Target.
+
+    The begin and end positions are in the typical python format, i.e. 0 based
+    and excluding the last position.
     """
     def __init__(self, chromosome, begin, end, name):
         self.chrom = chromosome

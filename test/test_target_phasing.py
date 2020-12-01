@@ -25,6 +25,7 @@ TARGETS = [
         (Target('chr1', 0, 5, 'test'), [('chr1', 1, 2)], '-+---'),
         (Target('chr1', 5, 10, 'test'), [('chr1', 6, 7)], '-+---'),
         (Target('chr1', 5, 10, 'test'), [('chr1', 4, 7)], '++---'),
+        (Target('chr1', 0, 6, 'test'), [('chr1', 1, 5)], '-++++-'),
 ]
 
 PHASED = [
