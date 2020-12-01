@@ -8,7 +8,7 @@ regions, which are not suitable to add as full MultiQC modules.
 
 from setuptools import setup, find_packages
 
-version = '0.0.5'
+version = '0.0.6'
 
 setup(
     name = 'multiqc_PGx',
