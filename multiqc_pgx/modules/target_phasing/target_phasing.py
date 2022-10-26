@@ -558,3 +558,12 @@ class Target():
                 rest = end-self.begin
                 self.phasing = '+' * rest + self.phasing[rest:]
         assert old_length == len(self.phasing), f'Error in {region}'
+
+def add_fake_file_pattern():
+    """ Add a fake file pattern to the target_phasing module. This file pattern
+    is ignored, but triggers the module to run, since MultiQC v1.12 and higher
+    only run modules that have at least one matching file.
+    """
+    from multiqc.utils import config
+    fake_file_pattern = {'target_phasing': { 'fn': '*.phased.blocklist' }}
+    config.update_dict(config.sp, fake_file_pattern)

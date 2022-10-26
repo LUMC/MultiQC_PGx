@@ -21,7 +21,7 @@ setup(
     packages = find_packages(),
     include_package_data = True,
     install_requires = [
-        'multiqc==1.11'
+        'multiqc'
     ],
     entry_points = {
         'multiqc.cli_options.v1': [
@@ -31,6 +31,10 @@ setup(
         ],
         'multiqc.modules.v1': [
             'target_phasing = multiqc_pgx.modules.target_phasing:MultiqcModule'
+        ],
+        'multiqc.hooks.v1': [
+            'before_config = multiqc_pgx.modules.target_phasing:add_fake_file_pattern'
         ]
+
     }
 )
