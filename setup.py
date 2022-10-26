@@ -8,7 +8,7 @@ regions, which are not suitable to add as full MultiQC modules.
 
 from setuptools import setup, find_packages
 
-version = '0.1.1'
+version = '0.1.2'
 
 setup(
     name = 'multiqc_PGx',
@@ -21,7 +21,7 @@ setup(
     packages = find_packages(),
     include_package_data = True,
     install_requires = [
-        'multiqc @ git+https://git@github.com/redmar-van-den-berg/MultiQC@chimera#egg=multiqc'
+        'multiqc==1.11'
     ],
     entry_points = {
         'multiqc.cli_options.v1': [
